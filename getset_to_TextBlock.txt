@@ -1,0 +1,10 @@
+// get
+string displayed = (TextBlockName).DataContext.ToString();
+
+// set
+string new_string = "this is new!!";
+Binding set = new Binding();
+set.Mode = BindingMode.OneWay;
+set.Source = new_string;
+(TextBlockName).DataContext = new_string;
+(TextBlockName).SetBinding(TextBlock.TextProperty, set);
