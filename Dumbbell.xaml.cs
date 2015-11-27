@@ -130,6 +130,12 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// </summary>
         private string statusText = null;
 
+        /*
+         * For Capstone Project
+         * Global Variable
+         */
+        private Pen redPen;
+
         /// <summary>
         /// Initializes a new instance of the Dumbbell class.
         /// </summary>
@@ -191,11 +197,12 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             // populate body colors, one for each BodyIndex
             this.bodyColors = new List<Pen>();
 
-            this.bodyColors.Add(new Pen(Brushes.Orange, 5));
-            this.bodyColors.Add(new Pen(Brushes.Green, 5));
-            this.bodyColors.Add(new Pen(Brushes.Blue, 5));
-            this.bodyColors.Add(new Pen(Brushes.Indigo, 5));
-            this.bodyColors.Add(new Pen(Brushes.Violet, 5));
+            this.bodyColors.Add(new Pen(Brushes.Orange, 6));
+            this.bodyColors.Add(new Pen(Brushes.Green, 6));
+            this.bodyColors.Add(new Pen(Brushes.Blue, 6));
+            this.bodyColors.Add(new Pen(Brushes.Indigo, 6));
+            this.bodyColors.Add(new Pen(Brushes.Violet, 6));
+            this.redPen = new Pen(Brushes.Red, 6);
 
             // set IsAvailableChanged event notifier
             this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
@@ -354,8 +361,8 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
                             this.DrawBody(joints, jointPoints, dc, drawPen);
 
-                            this.DrawHand(body.HandLeftState, jointPoints[JointType.HandLeft], dc);
-                            this.DrawHand(body.HandRightState, jointPoints[JointType.HandRight], dc);
+                            // this.DrawHand(body.HandLeftState, jointPoints[JointType.HandLeft], dc);
+                            // this.DrawHand(body.HandRightState, jointPoints[JointType.HandRight], dc);
                         }
                     }
 
@@ -377,7 +384,13 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             // Draw the bones
             foreach (var bone in this.bones)
             {
-                this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                string type1_name = bone.Item1.ToString(), type2_name = bone.Item2.ToString();
+                if (type1_name.ToString() == "Head") {
+                    SetMessageBlock( String.Format("Head's coordinate is ({0:0.00}, {1:0.00})\n", joints[JointType.Head].Position.X, joints[JointType.Head].Position.Y) );
+                    this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                }
+                else
+                    this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
             }
 
             // Draw the joints
@@ -527,6 +540,28 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             // on failure, set the status text
             this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
                                                             : Properties.Resources.SensorNotAvailableStatusText;
+        }
+
+        /*
+            For Project,
+            Set MesageBlock(for user) to represent string(parameter).
+        */
+        private void SetMessageBlock(string my_string)
+        {
+            Binding set = new Binding();
+            set.Mode = BindingMode.OneWay;
+            set.Source = my_string;
+            MessageBlock.DataContext = my_string;
+            MessageBlock.SetBinding(TextBlock.TextProperty, set);
+        }
+
+        /*
+            For Project,
+            Get MessageBlock's current string(represented in screen).
+        */
+        private string GetMessageBlock()
+        {
+            return MessageBlock.DataContext.ToString();
         }
     }
 }
