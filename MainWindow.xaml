@@ -23,9 +23,9 @@
 
         <Button Content="Dumbbell" HorizontalAlignment="Left" Margin="93,66,0,0" Grid.Row="1" VerticalAlignment="Top" Width="130" Height="50" FontSize="20" Click="Dumbbell_Button_Click"/>
         <Button Content="Squat" HorizontalAlignment="Left" Margin="426,66,0,0" Grid.Row="1" VerticalAlignment="Top" Width="130" Height="50" FontSize="20" Click="Squat_Button_Click"/>
-        <Button Content="Button3" HorizontalAlignment="Left" Margin="93,365,0,0" Grid.Row="1" VerticalAlignment="Top" Width="130" Height="50" FontSize="20"/>
+        <Button Content="LegRaise" HorizontalAlignment="Left" Margin="93,207,0,0" Grid.Row="1" VerticalAlignment="Top" Width="130" Height="50" FontSize="20"/>
         <Button Content="Button4" HorizontalAlignment="Left" Margin="426,207,0,0" Grid.Row="1" VerticalAlignment="Top" Width="130" Height="50" FontSize="20"/>
-        <Button Content="Button5" HorizontalAlignment="Left" Margin="93,207,0,0" Grid.Row="1" VerticalAlignment="Top" Width="130" Height="50" FontSize="20"/>
+        <Button Content="Button5" HorizontalAlignment="Left" Margin="93,365,0,0" Grid.Row="1" VerticalAlignment="Top" Width="130" Height="50" FontSize="20"/>
         <Button Content="Button6" HorizontalAlignment="Left" Margin="426,365,0,0" Grid.Row="1" VerticalAlignment="Top" Width="130" Height="50" FontSize="20"/>
 
     </Grid>

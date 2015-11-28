@@ -185,23 +185,23 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             this.bones.Add(new Tuple<JointType, JointType>(JointType.WristLeft, JointType.ThumbLeft));
 
             // Right Leg
-            this.bones.Add(new Tuple<JointType, JointType>(JointType.HipRight, JointType.KneeRight));
+            /*this.bones.Add(new Tuple<JointType, JointType>(JointType.HipRight, JointType.KneeRight));
             this.bones.Add(new Tuple<JointType, JointType>(JointType.KneeRight, JointType.AnkleRight));
             this.bones.Add(new Tuple<JointType, JointType>(JointType.AnkleRight, JointType.FootRight));
 
             // Left Leg
             this.bones.Add(new Tuple<JointType, JointType>(JointType.HipLeft, JointType.KneeLeft));
             this.bones.Add(new Tuple<JointType, JointType>(JointType.KneeLeft, JointType.AnkleLeft));
-            this.bones.Add(new Tuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft));
+            this.bones.Add(new Tuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft));*/
 
             // populate body colors, one for each BodyIndex
             this.bodyColors = new List<Pen>();
 
-            this.bodyColors.Add(new Pen(Brushes.Orange, 6));
-            this.bodyColors.Add(new Pen(Brushes.Green, 6));
+            /*this.bodyColors.Add(new Pen(Brushes.Orange, 6));
+            this.bodyColors.Add(new Pen(Brushes.Green, 6));*/
             this.bodyColors.Add(new Pen(Brushes.Blue, 6));
-            this.bodyColors.Add(new Pen(Brushes.Indigo, 6));
-            this.bodyColors.Add(new Pen(Brushes.Violet, 6));
+            /*this.bodyColors.Add(new Pen(Brushes.Indigo, 6));
+            this.bodyColors.Add(new Pen(Brushes.Violet, 6));*/
             this.redPen = new Pen(Brushes.Red, 6);
 
             // set IsAvailableChanged event notifier
@@ -313,6 +313,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     {
                         this.bodies = new Body[bodyFrame.BodyCount];
                     }
+                    // SetMessageBlock(String.Format("{0}\n", bodyFrame.BodyCount));
 
                     // The first time GetAndRefreshBodyData is called, Kinect will allocate each Body in the array.
                     // As long as those body objects are not disposed and not set to null in the array,
@@ -321,7 +322,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     dataReceived = true;
                 }
             }
-
+            
             if (dataReceived)
             {
                 using (DrawingContext dc = this.drawingGroup.Open())
@@ -329,16 +330,18 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     // Draw a transparent background to set the render size
                     // dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, this.displayWidth, this.displayHeight));
                     dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, 700, 400));
-
+                    
                     int penIndex = 0;
+                    bool body_existed = false;
                     foreach (Body body in this.bodies)
                     {
                         Pen drawPen = this.bodyColors[penIndex];
-                        penIndex = (penIndex + 1) % 5;
+                        // penIndex = (penIndex + 1) % 1;
 
-                        if (body.IsTracked)
+                        if (body.IsTracked && !body_existed)
                         {
                             // this.DrawClippedEdges(body, dc);
+                            body_existed = true;
 
                             IReadOnlyDictionary<JointType, Joint> joints = body.Joints;
 
@@ -381,21 +384,53 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// <param name="drawingPen">specifies color to draw a specific body</param>
         private void DrawBody(IReadOnlyDictionary<JointType, Joint> joints, IDictionary<JointType, Point> jointPoints, DrawingContext drawingContext, Pen drawingPen)
         {
+            String fix_message = "";
+
             // Draw the bones
             foreach (var bone in this.bones)
             {
+                // ShoulderLeft, JointType.ElbowLeft
                 string type1_name = bone.Item1.ToString(), type2_name = bone.Item2.ToString();
-                if (type1_name.ToString() == "Head") {
-                    SetMessageBlock( String.Format("Head's coordinate is ({0:0.00}, {1:0.00})\n", joints[JointType.Head].Position.X, joints[JointType.Head].Position.Y) );
-                    this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                switch (type1_name) {
+                    case "ShoulderLeft":
+                        double x1 = joints[JointType.ShoulderLeft].Position.X, y1 = joints[JointType.ShoulderLeft].Position.Y;
+                        double x2 = joints[JointType.ElbowLeft].Position.X, y2 = joints[JointType.ElbowLeft].Position.Y;
+                        double x3 = joints[JointType.WristLeft].Position.X, y3 = joints[JointType.WristLeft].Position.Y;
+                        double slope = (y1 - y2) / (x1 - x2), mid = (y1 + y2) / 2;
+                        
+                        bool check = false;
+                        if (y3 < mid) {
+                            if (! (slope >= 4 || slope <= -4) ) {
+                                fix_message += (String.Format("11왼팔을 안으로(상체쪽으로) 꽉 붙이세요\n"));
+                                check = true;
+                            }
+                        }
+                        else {
+                            if (!(slope >= 2.5 || slope <= -2.5)) {
+                                fix_message += (String.Format("왼팔을 안으로(상체쪽으로) 꽉 붙이세요\n"));
+                                check = true;
+                            }
+                        }
+
+                        if (check)
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        else
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        break;
+                    default:
+                        this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        break;
                 }
-                else
-                    this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
             }
+
+            SetMessageBlock(fix_message);
 
             // Draw the joints
             foreach (JointType jointType in joints.Keys)
             {
+                if (jointType >= JointType.HipLeft)
+                    continue;
+
                 Brush drawBrush = null;
 
                 TrackingState trackingState = joints[jointType].TrackingState;
