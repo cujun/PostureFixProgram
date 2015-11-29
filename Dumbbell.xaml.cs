@@ -389,31 +389,76 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             // Draw the bones
             foreach (var bone in this.bones)
             {
-                // ShoulderLeft, JointType.ElbowLeft
-                string type1_name = bone.Item1.ToString(), type2_name = bone.Item2.ToString();
-                switch (type1_name) {
+                string currBoneName = bone.Item1.ToString(), subBoneName = bone.Item2.ToString();
+
+                Joint joint0 = joints[bone.Item1];
+                Joint joint1 = joints[bone.Item2];
+                if (! (joint0.TrackingState == TrackingState.Tracked) && (joint1.TrackingState == TrackingState.Tracked) ) {
+                    currBoneName = "";
+                }
+                
+                switch (currBoneName) {
+                    case "SpineShoulder":
+                        if (subBoneName != "ShoulderLeft") {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                            break;
+                        }
+
+                        double z_shoulder = joints[JointType.ShoulderLeft].Position.Z;
+                        double z_body = joints[JointType.SpineShoulder].Position.Z;
+                        double z_sub = z_shoulder > z_body ? z_shoulder - z_body : z_body - z_shoulder;
+                        // SetMessageBlock(String.Format("{0:0.000} vs {1:0.000}\n", z_shoulder, z_body));
+                        SetMessageBlock(String.Format("{0:0.000}\n", z_sub));
+
+                        bool check_shoulder = false;
+
+                        if (check_shoulder) {
+                            SetMessageBlock(String.Format("어깨를 피세요!"));
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        }
+                        else
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        break;
                     case "ShoulderLeft":
                         double x1 = joints[JointType.ShoulderLeft].Position.X, y1 = joints[JointType.ShoulderLeft].Position.Y;
                         double x2 = joints[JointType.ElbowLeft].Position.X, y2 = joints[JointType.ElbowLeft].Position.Y;
                         double x3 = joints[JointType.WristLeft].Position.X, y3 = joints[JointType.WristLeft].Position.Y;
                         double slope = (y1 - y2) / (x1 - x2), mid = (y1 + y2) / 2;
-                        
-                        bool check = false;
-                        if (y3 < mid) {
-                            if (! (slope >= 4 || slope <= -4) ) {
-                                fix_message += (String.Format("11왼팔을 안으로(상체쪽으로) 꽉 붙이세요\n"));
-                                check = true;
-                            }
+                        double dist = (x3 < x2) ? x2 - x3 : x2 - x3;
+                        dist += (y3 < y2) ? y2 - y3 : y3 - y2;
+
+                        bool check_elbow = false;
+                        if (dist <= 0.02) {
+                        }
+                        else if (y3 < mid) {
+                            if (! (slope >= 3.6 || slope <= -3.6) )
+                                check_elbow = true;
                         }
                         else {
-                            if (!(slope >= 2.5 || slope <= -2.5)) {
-                                fix_message += (String.Format("왼팔을 안으로(상체쪽으로) 꽉 붙이세요\n"));
-                                check = true;
-                            }
+                            if (! (slope >= 2.0 || slope <= -2.0) )
+                                check_elbow = true;
                         }
 
-                        if (check)
+                        if (check_elbow) {
+                            fix_message += (String.Format("왼팔을 안으로(상체쪽으로) 꽉 붙이세요\n"));
                             this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        }
+                        else
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        break;
+                    case "ElbowLeft":
+                        double x_elbow = joints[JointType.ElbowLeft].Position.X;
+                        double x_hand = joints[JointType.WristLeft].Position.X;
+                        double x_sub = x_elbow > x_hand ? x_elbow - x_hand : x_hand - x_elbow;
+
+                        bool check = false;
+                        if (! ( x_sub < 0.06) )
+                            check = true;
+
+                        if (check) {
+                            fix_message += (String.Format("팔과 팔꿈치와 어깨를 1자로 만드세요\n"));
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        }
                         else
                             this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
                         break;
@@ -423,7 +468,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 }
             }
 
-            SetMessageBlock(fix_message);
+            // SetMessageBlock(fix_message);
 
             // Draw the joints
             foreach (JointType jointType in joints.Keys)
