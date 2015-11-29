@@ -203,11 +203,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             // populate body colors, one for each BodyIndex
             this.bodyColors = new List<Pen>();
 
-            /*this.bodyColors.Add(new Pen(Brushes.Orange, 6));
-            this.bodyColors.Add(new Pen(Brushes.Green, 6));*/
             this.bodyColors.Add(new Pen(Brushes.Blue, 6));
-            /*this.bodyColors.Add(new Pen(Brushes.Indigo, 6));
-            this.bodyColors.Add(new Pen(Brushes.Violet, 6));*/
             this.redPen = new Pen(Brushes.Red, 6);
             this.orangePen = new Pen(Brushes.DarkOrange, 6);
 
@@ -335,7 +331,6 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 using (DrawingContext dc = this.drawingGroup.Open())
                 {
                     // Draw a transparent background to set the render size
-                    // dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, this.displayWidth, this.displayHeight));
                     dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, 700, 400));
 
                     int penIndex = 0;
@@ -343,11 +338,9 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     foreach (Body body in this.bodies)
                     {
                         Pen drawPen = this.bodyColors[penIndex];
-                        // penIndex = (penIndex + 1) % 1;
 
                         if (body.IsTracked && !body_existed)
                         {
-                            // this.DrawClippedEdges(body, dc);
                             body_existed = true;
 
                             IReadOnlyDictionary<JointType, Joint> joints = body.Joints;
@@ -370,9 +363,6 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                             }
 
                             this.DrawBody(joints, jointPoints, dc, drawPen);
-
-                            // this.DrawHand(body.HandLeftState, jointPoints[JointType.HandLeft], dc);
-                            // this.DrawHand(body.HandRightState, jointPoints[JointType.HandRight], dc);
                         }
                     }
 
@@ -401,9 +391,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 Joint joint0 = joints[bone.Item1];
                 Joint joint1 = joints[bone.Item2];
                 if (!(joint0.TrackingState == TrackingState.Tracked) && (joint1.TrackingState == TrackingState.Tracked))
-                {
                     currBoneName = "";
-                }
 
                 double x_shoulder = joints[JointType.ShoulderLeft].Position.X, y_shoulder = joints[JointType.ShoulderLeft].Position.Y;
                 double x2_shoulder = joints[JointType.ShoulderRight].Position.X, y2_shoulder = joints[JointType.ShoulderRight].Position.Y;
@@ -414,8 +402,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 double z_shoulder = joints[JointType.ShoulderLeft].Position.Z, z2_shoulder = joints[JointType.ShoulderRight].Position.Z;
                 double z_elbow = joints[JointType.ElbowLeft].Position.Z, z2_elbow = joints[JointType.ElbowRight].Position.Z;
 
-                switch (currBoneName)
-                {
+                switch (currBoneName) {
                     case "ShoulderLeft":
                         bool check_shoulder = false, check_depth = false;
                         double z_sub = Math.Abs(z_elbow - z_shoulder);
@@ -437,7 +424,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                         break;
                     case "ElbowLeft":
                         bool check_elbow = false;
-                        double x_sub = x_elbow > x_wrist ? x_elbow - x_wrist : x_wrist - x_elbow;
+                        double x_sub = Math.Abs(x_elbow - x_wrist);
                         if (! (x_sub < MaxDiff) )
                             check_elbow = true;
 
@@ -469,7 +456,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                         break;
                     case "ElbowRight":
                         bool check_elbow2 = false;
-                        double x_sub2 = x2_elbow > x2_wrist ? x2_elbow - x2_wrist : x2_wrist - x2_elbow;
+                        double x_sub2 = Math.Abs(x2_elbow - x2_wrist);
                         if (!(x_sub2 < MaxDiff))
                             check_elbow2 = true;
 

@@ -197,11 +197,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             // populate body colors, one for each BodyIndex
             this.bodyColors = new List<Pen>();
 
-            /*this.bodyColors.Add(new Pen(Brushes.Orange, 6));
-            this.bodyColors.Add(new Pen(Brushes.Green, 6));*/
             this.bodyColors.Add(new Pen(Brushes.Blue, 6));
-            /*this.bodyColors.Add(new Pen(Brushes.Indigo, 6));
-            this.bodyColors.Add(new Pen(Brushes.Violet, 6));*/
             this.redPen = new Pen(Brushes.Red, 6);
 
             // set IsAvailableChanged event notifier
@@ -309,11 +305,9 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             {
                 if (bodyFrame != null)
                 {
-                    if (this.bodies == null)
-                    {
+                    if (this.bodies == null) {
                         this.bodies = new Body[bodyFrame.BodyCount];
                     }
-                    // SetMessageBlock_Dumbbell(String.Format("{0}\n", bodyFrame.BodyCount));
 
                     // The first time GetAndRefreshBodyData is called, Kinect will allocate each Body in the array.
                     // As long as those body objects are not disposed and not set to null in the array,
@@ -336,11 +330,9 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     foreach (Body body in this.bodies)
                     {
                         Pen drawPen = this.bodyColors[penIndex];
-                        // penIndex = (penIndex + 1) % 1;
 
                         if (body.IsTracked && !body_existed)
                         {
-                            // this.DrawClippedEdges(body, dc);
                             body_existed = true;
 
                             IReadOnlyDictionary<JointType, Joint> joints = body.Joints;
@@ -363,9 +355,6 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                             }
 
                             this.DrawBody(joints, jointPoints, dc, drawPen);
-
-                            // this.DrawHand(body.HandLeftState, jointPoints[JointType.HandLeft], dc);
-                            // this.DrawHand(body.HandRightState, jointPoints[JointType.HandRight], dc);
                         }
                     }
 
@@ -393,44 +382,21 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
                 Joint joint0 = joints[bone.Item1];
                 Joint joint1 = joints[bone.Item2];
-                if (! (joint0.TrackingState == TrackingState.Tracked) && (joint1.TrackingState == TrackingState.Tracked) ) {
+                if (! (joint0.TrackingState == TrackingState.Tracked) && (joint1.TrackingState == TrackingState.Tracked) )
                     currBoneName = "";
-                }
                 
                 switch (currBoneName) {
-                    case "SpineShoulder":
-                        if (subBoneName != "ShoulderLeft") {
-                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
-                            break;
-                        }
-
-                        double z_shoulder = joints[JointType.ShoulderLeft].Position.Z;
-                        double z_body = joints[JointType.SpineShoulder].Position.Z;
-                        double z_sub = z_shoulder > z_body ? z_shoulder - z_body : z_body - z_shoulder;
-                        // SetMessageBlock_Dumbbell(String.Format("{0:0.000} vs {1:0.000}\n", z_shoulder, z_body));
-                        // SetMessageBlock_Dumbbell(String.Format("{0:0.000}\n", z_shoulder * 100));
-
-                        bool check_shoulder = false;
-
-                        if (check_shoulder) {
-                            SetMessageBlock_Dumbbell(String.Format("어깨를 피세요!"));
-                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
-                        }
-                        else
-                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
-                        break;
                     case "ShoulderLeft":
                         double x1 = joints[JointType.ShoulderLeft].Position.X, y1 = joints[JointType.ShoulderLeft].Position.Y;
                         double x2 = joints[JointType.ElbowLeft].Position.X, y2 = joints[JointType.ElbowLeft].Position.Y;
                         double x3 = joints[JointType.WristLeft].Position.X, y3 = joints[JointType.WristLeft].Position.Y;
                         double slope = (y1 - y2) / (x1 - x2), mid = (y1 + y2) / 2;
-                        double dist = (x3 < x2) ? x2 - x3 : x2 - x3;
-                        dist += (y3 < y2) ? y2 - y3 : y3 - y2;
+                        double dist = Math.Abs(x2 - x3) + Math.Abs(y2 - y3);
 
                         bool check_elbow = false;
                         if (dist <= 0.02) {
                         }
-                        else if (y3 < mid) {
+                        else if (y3 < y2) {
                             if (! (slope >= 3.6 || slope <= -3.6) )
                                 check_elbow = true;
                         }
@@ -449,7 +415,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     case "ElbowLeft":
                         double x_elbow = joints[JointType.ElbowLeft].Position.X;
                         double x_hand = joints[JointType.WristLeft].Position.X;
-                        double x_sub = x_elbow > x_hand ? x_elbow - x_hand : x_hand - x_elbow;
+                        double x_sub = Math.Abs(x_elbow - x_hand);
 
                         bool check = false;
                         if (! ( x_sub < 0.06) )
@@ -546,7 +512,6 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 case HandState.Open:
                     drawingContext.DrawEllipse(this.handOpenBrush, null, handPosition, HandSize, HandSize);
 
-                    // footerMainMenuText = MessageBlock_Dumbbell.DataContext.ToString();
                     footerMainMenuText = "Paper";
                     set = new Binding();
                     set.Mode = BindingMode.OneWay;
