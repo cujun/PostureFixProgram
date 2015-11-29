@@ -70,5 +70,12 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             new_window.Owner = this;
             new_window.Show();
         }
+
+        private void ShoulderPress_Button_Click(object sender, RoutedEventArgs e)
+        {
+            ShoulderPress new_window = new ShoulderPress();
+            new_window.Owner = this;
+            new_window.Show();
+        }
     }
 }

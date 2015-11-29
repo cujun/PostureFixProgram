@@ -21,9 +21,9 @@ using Microsoft.Kinect;
 namespace Microsoft.Samples.Kinect.BodyBasics
 {
     /// <summary>
-    /// Dumbbell.xaml에 대한 상호 작용 논리
+    /// ShoulderPress.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class Dumbbell : Window
+    public partial class ShoulderPress : Window
     {
         /// <summary>
         /// Radius of drawn hand circles
@@ -44,6 +44,11 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// Constant for clamping Z values of camera space points from being negative
         /// </summary>
         private const float InferredZPositionClamp = 0.1f;
+
+        /*
+         * Capstone project
+         */
+        private const double MaxDiff = 0.05;
 
         /// <summary>
         /// Brush used for drawing hands that are currently tracked as closed
@@ -135,11 +140,12 @@ namespace Microsoft.Samples.Kinect.BodyBasics
          * Global Variable
          */
         private Pen redPen;
+        private Pen orangePen;
 
         /// <summary>
-        /// Initializes a new instance of the Dumbbell class.
+        /// Initializes a new instance of the ShoulderPress class.
         /// </summary>
-        public Dumbbell()
+        public ShoulderPress()
         {
             // one sensor is currently supported
             this.kinectSensor = KinectSensor.GetDefault();
@@ -203,6 +209,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             /*this.bodyColors.Add(new Pen(Brushes.Indigo, 6));
             this.bodyColors.Add(new Pen(Brushes.Violet, 6));*/
             this.redPen = new Pen(Brushes.Red, 6);
+            this.orangePen = new Pen(Brushes.DarkOrange, 6);
 
             // set IsAvailableChanged event notifier
             this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
@@ -273,7 +280,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// </summary>
         /// <param name="sender">object sending the event</param>
         /// <param name="e">event arguments</param>
-        private void Dumbbell_Loaded(object sender, RoutedEventArgs e)
+        private void ShoulderPress_Loaded(object sender, RoutedEventArgs e)
         {
             if (this.bodyFrameReader != null)
             {
@@ -286,7 +293,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// </summary>
         /// <param name="sender">object sending the event</param>
         /// <param name="e">event arguments</param>
-        private void Dumbbell_Closing(object sender, CancelEventArgs e)
+        private void ShoulderPress_Closing(object sender, CancelEventArgs e)
         {
             if (this.bodyFrameReader != null)
             {
@@ -313,7 +320,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     {
                         this.bodies = new Body[bodyFrame.BodyCount];
                     }
-                    // SetMessageBlock_Dumbbell(String.Format("{0}\n", bodyFrame.BodyCount));
+                    // SetMessageBlock(String.Format("{0}\n", bodyFrame.BodyCount));
 
                     // The first time GetAndRefreshBodyData is called, Kinect will allocate each Body in the array.
                     // As long as those body objects are not disposed and not set to null in the array,
@@ -322,7 +329,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     dataReceived = true;
                 }
             }
-            
+
             if (dataReceived)
             {
                 using (DrawingContext dc = this.drawingGroup.Open())
@@ -330,7 +337,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     // Draw a transparent background to set the render size
                     // dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, this.displayWidth, this.displayHeight));
                     dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, 700, 400));
-                    
+
                     int penIndex = 0;
                     bool body_existed = false;
                     foreach (Body body in this.bodies)
@@ -393,70 +400,81 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
                 Joint joint0 = joints[bone.Item1];
                 Joint joint1 = joints[bone.Item2];
-                if (! (joint0.TrackingState == TrackingState.Tracked) && (joint1.TrackingState == TrackingState.Tracked) ) {
+                if (!(joint0.TrackingState == TrackingState.Tracked) && (joint1.TrackingState == TrackingState.Tracked))
+                {
                     currBoneName = "";
                 }
-                
-                switch (currBoneName) {
-                    case "SpineShoulder":
-                        if (subBoneName != "ShoulderLeft") {
-                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
-                            break;
-                        }
 
-                        double z_shoulder = joints[JointType.ShoulderLeft].Position.Z;
-                        double z_body = joints[JointType.SpineShoulder].Position.Z;
-                        double z_sub = z_shoulder > z_body ? z_shoulder - z_body : z_body - z_shoulder;
-                        // SetMessageBlock_Dumbbell(String.Format("{0:0.000} vs {1:0.000}\n", z_shoulder, z_body));
-                        // SetMessageBlock_Dumbbell(String.Format("{0:0.000}\n", z_shoulder * 100));
+                double x_shoulder = joints[JointType.ShoulderLeft].Position.X, y_shoulder = joints[JointType.ShoulderLeft].Position.Y;
+                double x2_shoulder = joints[JointType.ShoulderRight].Position.X, y2_shoulder = joints[JointType.ShoulderRight].Position.Y;
+                double x_elbow = joints[JointType.ElbowLeft].Position.X, y_elbow = joints[JointType.ElbowLeft].Position.Y;
+                double x2_elbow = joints[JointType.ElbowRight].Position.X, y2_elbow = joints[JointType.ElbowRight].Position.Y;
+                double x_wrist = joints[JointType.WristLeft].Position.X, y_wrist = joints[JointType.WristLeft].Position.Y;
+                double x2_wrist = joints[JointType.WristRight].Position.X, y2_wrist = joints[JointType.WristRight].Position.Y;
+                double z_shoulder = joints[JointType.ShoulderLeft].Position.Z, z2_shoulder = joints[JointType.ShoulderRight].Position.Z;
+                double z_elbow = joints[JointType.ElbowLeft].Position.Z, z2_elbow = joints[JointType.ElbowRight].Position.Z;
 
-                        bool check_shoulder = false;
+                switch (currBoneName)
+                {
+                    case "ShoulderLeft":
+                        bool check_shoulder = false, check_depth = false;
+                        double z_sub = Math.Abs(z_elbow - z_shoulder);
+                        if (y_elbow  + MaxDiff < y_shoulder)
+                            check_shoulder = true;
+                        if (!(z_sub < MaxDiff))
+                            check_depth = true;
 
                         if (check_shoulder) {
-                            SetMessageBlock_Dumbbell(String.Format("어깨를 피세요!"));
+                            fix_message += "왼팔을 더 올리세요!\n";
                             this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
                         }
-                        else
-                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
-                        break;
-                    case "ShoulderLeft":
-                        double x1 = joints[JointType.ShoulderLeft].Position.X, y1 = joints[JointType.ShoulderLeft].Position.Y;
-                        double x2 = joints[JointType.ElbowLeft].Position.X, y2 = joints[JointType.ElbowLeft].Position.Y;
-                        double x3 = joints[JointType.WristLeft].Position.X, y3 = joints[JointType.WristLeft].Position.Y;
-                        double slope = (y1 - y2) / (x1 - x2), mid = (y1 + y2) / 2;
-                        double dist = (x3 < x2) ? x2 - x3 : x2 - x3;
-                        dist += (y3 < y2) ? y2 - y3 : y3 - y2;
-
-                        bool check_elbow = false;
-                        if (dist <= 0.02) {
-                        }
-                        else if (y3 < mid) {
-                            if (! (slope >= 3.6 || slope <= -3.6) )
-                                check_elbow = true;
-                        }
-                        else {
-                            if (! (slope >= 2.0 || slope <= -2.0) )
-                                check_elbow = true;
-                        }
-
-                        if (check_elbow) {
-                            fix_message += (String.Format("왼팔을 안으로(상체쪽으로) 꽉 붙이세요\n"));
-                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        else if (check_depth) {
+                            fix_message += "오른쪽 팔꿈치를 어깨와 나란하게 만드세요!\n";
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, orangePen);
                         }
                         else
                             this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
                         break;
                     case "ElbowLeft":
-                        double x_elbow = joints[JointType.ElbowLeft].Position.X;
-                        double x_hand = joints[JointType.WristLeft].Position.X;
-                        double x_sub = x_elbow > x_hand ? x_elbow - x_hand : x_hand - x_elbow;
+                        bool check_elbow = false;
+                        double x_sub = x_elbow > x_wrist ? x_elbow - x_wrist : x_wrist - x_elbow;
+                        if (! (x_sub < MaxDiff) )
+                            check_elbow = true;
 
-                        bool check = false;
-                        if (! ( x_sub < 0.06) )
-                            check = true;
+                        if (check_elbow) {
+                            fix_message += "왼쪽 손목과 팔꿈치를 수직으로(1자모양) 만드세요!\n";
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        }
+                        else
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        break;
+                    case "ShoulderRight":
+                        bool check_shoulder2 = false, check_depth2 = false;
+                        double z2_sub = Math.Abs(z2_elbow - z2_shoulder);
+                        if (y2_elbow + MaxDiff < y2_shoulder)
+                            check_shoulder2 = true;
+                        if (!(z2_sub < MaxDiff))
+                            check_depth2 = true;
 
-                        if (check) {
-                            fix_message += (String.Format("팔과 팔꿈치와 어깨를 1자로 만드세요\n"));
+                        if (check_shoulder2) {
+                            fix_message += "오른팔을 더 올리세요!\n";
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        }
+                        else if (check_depth2) {
+                            fix_message += "오른쪽 팔꿈치를 어깨와 나란하게 만드세요!\n";
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, orangePen);
+                        }
+                        else
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        break;
+                    case "ElbowRight":
+                        bool check_elbow2 = false;
+                        double x_sub2 = x2_elbow > x2_wrist ? x2_elbow - x2_wrist : x2_wrist - x2_elbow;
+                        if (!(x_sub2 < MaxDiff))
+                            check_elbow2 = true;
+
+                        if (check_elbow2) {
+                            fix_message += "오른쪽 손목과 팔꿈치를 수직으로(1자모양) 만드세요!\n";
                             this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
                         }
                         else
@@ -468,7 +486,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 }
             }
 
-            SetMessageBlock_Dumbbell(fix_message);
+            SetMessageBlock(fix_message);
 
             // Draw the joints
             foreach (JointType jointType in joints.Keys)
@@ -546,13 +564,13 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 case HandState.Open:
                     drawingContext.DrawEllipse(this.handOpenBrush, null, handPosition, HandSize, HandSize);
 
-                    // footerMainMenuText = MessageBlock_Dumbbell.DataContext.ToString();
+                    // footerMainMenuText = MessageBlock.DataContext.ToString();
                     footerMainMenuText = "Paper";
                     set = new Binding();
                     set.Mode = BindingMode.OneWay;
                     set.Source = footerMainMenuText;
-                    MessageBlock_Dumbbell.DataContext = footerMainMenuText;
-                    MessageBlock_Dumbbell.SetBinding(TextBlock.TextProperty, set);
+                    MessageBlock.DataContext = footerMainMenuText;
+                    MessageBlock.SetBinding(TextBlock.TextProperty, set);
                     break;
 
                 case HandState.Lasso:
@@ -562,8 +580,8 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     set = new Binding();
                     set.Mode = BindingMode.OneWay;
                     set.Source = footerMainMenuText;
-                    MessageBlock_Dumbbell.DataContext = footerMainMenuText;
-                    MessageBlock_Dumbbell.SetBinding(TextBlock.TextProperty, set);
+                    MessageBlock.DataContext = footerMainMenuText;
+                    MessageBlock.SetBinding(TextBlock.TextProperty, set);
                     break;
             }
         }
@@ -626,22 +644,22 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             For Project,
             Set MesageBlock(for user) to represent string(parameter).
         */
-        private void SetMessageBlock_Dumbbell(string my_string)
+        private void SetMessageBlock(string my_string)
         {
             Binding set = new Binding();
             set.Mode = BindingMode.OneWay;
             set.Source = my_string;
-            MessageBlock_Dumbbell.DataContext = my_string;
-            MessageBlock_Dumbbell.SetBinding(TextBlock.TextProperty, set);
+            MessageBlock.DataContext = my_string;
+            MessageBlock.SetBinding(TextBlock.TextProperty, set);
         }
 
         /*
             For Project,
-            Get MessageBlock_Dumbbell's current string(represented in screen).
+            Get MessageBlock's current string(represented in screen).
         */
-        private string GetMessageBlock_Dumbbell()
+        private string GetMessageBlock()
         {
-            return MessageBlock_Dumbbell.DataContext.ToString();
+            return MessageBlock.DataContext.ToString();
         }
     }
 }

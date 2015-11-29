@@ -77,6 +77,9 @@
     <Compile Include="Squat.xaml.cs">
       <DependentUpon>Squat.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ShoulderPress.xaml.cs">
+      <DependentUpon>ShoulderPress.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -94,6 +97,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Squat.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ShoulderPress.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
