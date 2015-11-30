@@ -10,8 +10,8 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
+using System.Windows.Shapes;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -44,6 +44,11 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// Constant for clamping Z values of camera space points from being negative
         /// </summary>
         private const float InferredZPositionClamp = 0.1f;
+
+        /*
+         * Capstone project
+         */
+        private const double MaxDiff = 0.05;
 
         /// <summary>
         /// Brush used for drawing hands that are currently tracked as closed
@@ -130,8 +135,15 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// </summary>
         private string statusText = null;
 
+        /*
+         * For Capstone Project
+         * Global Variable
+         */
+        private Pen redPen;
+        private Pen orangePen;
+
         /// <summary>
-        /// Initializes a new instance of the Dumbbell class.
+        /// Initializes a new instance of the Squat class.
         /// </summary>
         public Squat()
         {
@@ -143,8 +155,6 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
             // get the depth (display) extents
             FrameDescription frameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
-            StreamWriter sw = new StreamWriter("output.txt");
-
 
             // get size of joint space
             this.displayWidth = frameDescription.Width;
@@ -193,12 +203,9 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             // populate body colors, one for each BodyIndex
             this.bodyColors = new List<Pen>();
 
-            this.bodyColors.Add(new Pen(Brushes.Red, 6));
-            this.bodyColors.Add(new Pen(Brushes.Orange, 6));
-            this.bodyColors.Add(new Pen(Brushes.Green, 6));
             this.bodyColors.Add(new Pen(Brushes.Blue, 6));
-            this.bodyColors.Add(new Pen(Brushes.Indigo, 6));
-            this.bodyColors.Add(new Pen(Brushes.Violet, 6));
+            this.redPen = new Pen(Brushes.Red, 6);
+            this.orangePen = new Pen(Brushes.DarkOrange, 6);
 
             // set IsAvailableChanged event notifier
             this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
@@ -290,12 +297,6 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 this.bodyFrameReader.Dispose();
                 this.bodyFrameReader = null;
             }
-
-            /*if (this.kinectSensor != null)
-            {
-                this.kinectSensor.Close();
-                this.kinectSensor = null;
-            }*/
         }
 
         /// <summary>
@@ -315,6 +316,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     {
                         this.bodies = new Body[bodyFrame.BodyCount];
                     }
+                    // SetMessageBlock(String.Format("{0}\n", bodyFrame.BodyCount));
 
                     // The first time GetAndRefreshBodyData is called, Kinect will allocate each Body in the array.
                     // As long as those body objects are not disposed and not set to null in the array,
@@ -329,16 +331,17 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 using (DrawingContext dc = this.drawingGroup.Open())
                 {
                     // Draw a transparent background to set the render size
-                    dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, this.displayWidth, this.displayHeight));
+                    dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, 700, 400));
 
                     int penIndex = 0;
+                    bool body_existed = false;
                     foreach (Body body in this.bodies)
                     {
-                        Pen drawPen = this.bodyColors[penIndex++];
+                        Pen drawPen = this.bodyColors[penIndex];
 
-                        if (body.IsTracked)
+                        if (body.IsTracked && !body_existed)
                         {
-                            this.DrawClippedEdges(body, dc);
+                            body_existed = true;
 
                             IReadOnlyDictionary<JointType, Joint> joints = body.Joints;
 
@@ -349,7 +352,6 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                             {
                                 // sometimes the depth(Z) of an inferred joint may show as negative
                                 // clamp down to 0.1f to prevent coordinatemapper from returning (-Infinity, -Infinity)
-                                // Console.WriteLine("Coordinates :  " + jointPoints[JointType.HandLeft].X + " " + jointPoints[JointType.HandLeft].Y);
                                 CameraSpacePoint position = joints[jointType].Position;
                                 if (position.Z < 0)
                                 {
@@ -361,14 +363,11 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                             }
 
                             this.DrawBody(joints, jointPoints, dc, drawPen);
-
-                            this.DrawHand(body.HandLeftState, jointPoints[JointType.HandLeft], dc);
-                            this.DrawHand(body.HandRightState, jointPoints[JointType.HandRight], dc);
                         }
                     }
 
                     // prevent drawing outside of our render area
-                    this.drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, this.displayWidth, this.displayHeight));
+                    this.drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, 700, 400));
                 }
             }
         }
@@ -382,11 +381,150 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// <param name="drawingPen">specifies color to draw a specific body</param>
         private void DrawBody(IReadOnlyDictionary<JointType, Joint> joints, IDictionary<JointType, Point> jointPoints, DrawingContext drawingContext, Pen drawingPen)
         {
+            String fix_message = "";
+
             // Draw the bones
             foreach (var bone in this.bones)
             {
-                this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                string currBoneName = bone.Item1.ToString(), subBoneName = bone.Item2.ToString();
+
+                Joint joint0 = joints[bone.Item1];
+                Joint joint1 = joints[bone.Item2];
+                if (!(joint0.TrackingState == TrackingState.Tracked) && (joint1.TrackingState == TrackingState.Tracked))
+                    currBoneName = "";
+
+                CameraSpacePoint PointShoulderLeft = joints[JointType.ShoulderLeft].Position;
+                CameraSpacePoint PointShoulderRight = joints[JointType.ShoulderRight].Position;
+                CameraSpacePoint PointAnkleLeft = joints[JointType.AnkleLeft].Position;
+                CameraSpacePoint PointAnkleRight = joints[JointType.AnkleRight].Position;
+                CameraSpacePoint PointHipLeft = joints[JointType.HipLeft].Position;
+                CameraSpacePoint PointHipRight = joints[JointType.HipRight].Position;
+                CameraSpacePoint PointKneeLeft = joints[JointType.KneeLeft].Position;
+                CameraSpacePoint PointKneeRight = joints[JointType.KneeRight].Position;
+
+                bool check_pose = CheckSquatPoseNow(PointHipLeft, PointKneeLeft);
+                switch (currBoneName)
+                {
+                    case "AnkleLeft":
+                        bool check_foot = false;
+                        double dist = Math.Abs( (PointAnkleLeft.X+1) - (PointShoulderLeft.X+1-0.06) );
+
+                        if (dist > 0.08)
+                            check_foot = true;
+
+                        if (check_foot) {
+                            fix_message += "왼발을 어깨넓이만큼 벌리세요!\n";
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, orangePen);
+                        }
+                        else {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        }
+                        break;
+                    case "AnkleRight":
+                        bool check_foot2 = false;
+                        double dist2 = Math.Abs((PointAnkleRight.X + 1) - (PointShoulderRight.X + 1));
+
+                        if (dist2 > 0.08)
+                            check_foot2 = true;
+
+                        if (check_foot2) {
+                            fix_message += "오른발을 어깨넓이만큼 벌리세요!\n";
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, orangePen);
+                        }
+                        else {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        }
+                        break;
+                    case "HipLeft":
+                        if (!check_pose) {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                            break;
+                        }
+
+                        bool check_hip = false;
+                        double a_y = PointHipLeft.Y - PointKneeLeft.Y, a_z = PointHipLeft.Z - PointKneeLeft.Z;
+                        double b_y = PointAnkleLeft.Y - PointKneeLeft.Y, b_z = PointAnkleLeft.Z - PointKneeLeft.Z;
+                        double a_length = Math.Sqrt(a_y * a_y + a_z * a_z), b_length = Math.Sqrt(b_y * b_y + b_z * b_z);
+                        double theta = Math.Acos((a_y * b_y + a_z * b_z) / (a_length * b_length)) * (180.0 / Math.PI);
+                        if (theta > 83.0) {
+                            check_hip = true;
+                        }
+
+                        if (check_hip) {
+                            fix_message += "엉덩이를 더 내려주세요!\n";
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        }
+                        else {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        }
+                        break;
+                    case "HipRight":
+                        if (!check_pose) {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                            break;
+                        }
+
+                        bool check_hip2 = false;
+                        double a2_y = PointHipRight.Y - PointKneeRight.Y, a2_z = PointHipRight.Z - PointKneeRight.Z;
+                        double b2_y = PointAnkleRight.Y - PointKneeRight.Y, b2_z = PointAnkleRight.Z - PointKneeRight.Z;
+                        double a2_length = Math.Sqrt(a2_y * a2_y + a2_z * a2_z), b2_length = Math.Sqrt(b2_y * b2_y + b2_z * b2_z);
+                        double theta2 = Math.Acos((a2_y * b2_y + a2_z * b2_z) / (a2_length * b2_length)) * (180.0 / Math.PI);
+                        if (theta2 > 85.0) {
+                            check_hip2 = true;
+                        }
+
+                        if (check_hip2) {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        }
+                        else {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        }
+                        break;
+                    case "KneeLeft":
+                        if (!check_pose) {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                            break;
+                        }
+
+                        bool check_knee = false;
+                        if (PointKneeLeft.Z < PointAnkleLeft.Z - 0.03) {
+                            check_knee = true;
+                        }
+
+                        if (check_knee) {
+                            fix_message += "왼쪽 무릎을 뒤로 조금 빼세요!\n";
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        }
+                        else {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        }
+                        break;
+                    case "KneeRight":
+                        if (!check_pose) {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                            break;
+                        }
+
+                        bool check_knee2 = false;
+                        if (PointKneeRight.Z < PointAnkleRight.Z - 0.03) {
+                            check_knee2 = true;
+                        }
+
+                        if (check_knee2) {
+                            fix_message += "오른쪽 무릎을 뒤로 조금 빼세요!\n";
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, redPen);
+                        }
+                        else {
+                            this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        }
+                        break;
+                    default:
+                        this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                        break;
+                }
             }
+
+            SetMessageBlock(fix_message);
 
             // Draw the joints
             foreach (JointType jointType in joints.Keys)
@@ -450,6 +588,8 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// <param name="drawingContext">drawing context to draw to</param>
         private void DrawHand(HandState handState, Point handPosition, DrawingContext drawingContext)
         {
+            string footerMainMenuText;
+            Binding set;
             switch (handState)
             {
                 case HandState.Closed:
@@ -458,10 +598,25 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
                 case HandState.Open:
                     drawingContext.DrawEllipse(this.handOpenBrush, null, handPosition, HandSize, HandSize);
+
+                    // footerMainMenuText = MessageBlock.DataContext.ToString();
+                    footerMainMenuText = "Paper";
+                    set = new Binding();
+                    set.Mode = BindingMode.OneWay;
+                    set.Source = footerMainMenuText;
+                    MessageBlock.DataContext = footerMainMenuText;
+                    MessageBlock.SetBinding(TextBlock.TextProperty, set);
                     break;
 
                 case HandState.Lasso:
                     drawingContext.DrawEllipse(this.handLassoBrush, null, handPosition, HandSize, HandSize);
+
+                    footerMainMenuText = "Scissor";
+                    set = new Binding();
+                    set.Mode = BindingMode.OneWay;
+                    set.Source = footerMainMenuText;
+                    MessageBlock.DataContext = footerMainMenuText;
+                    MessageBlock.SetBinding(TextBlock.TextProperty, set);
                     break;
             }
         }
@@ -518,6 +673,38 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             // on failure, set the status text
             this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
                                                             : Properties.Resources.SensorNotAvailableStatusText;
+        }
+
+        /*
+            For Project,
+            Set MesageBlock(for user) to represent string(parameter).
+        */
+        private void SetMessageBlock(string my_string)
+        {
+            Binding set = new Binding();
+            set.Mode = BindingMode.OneWay;
+            set.Source = my_string;
+            MessageBlock.DataContext = my_string;
+            MessageBlock.SetBinding(TextBlock.TextProperty, set);
+        }
+
+        /*
+            For Project,
+            Get MessageBlock's current string(represented in screen).
+        */
+        private string GetMessageBlock()
+        {
+            return MessageBlock.DataContext.ToString();
+        }
+
+        /*
+         * For Capstone Project,
+         * check user is posing squat posture now.
+         * if yes reutrn true, else false
+         */
+        private bool CheckSquatPoseNow(CameraSpacePoint PointHip, CameraSpacePoint PointKnee)
+        {
+            return ( Math.Abs(PointHip.Y - PointKnee.Y) < MaxDiff + 0.2);
         }
     }
 }
