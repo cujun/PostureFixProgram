@@ -80,6 +80,15 @@
     <Compile Include="ShoulderPress.xaml.cs">
       <DependentUpon>ShoulderPress.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ShoulderPressExample.xaml.cs">
+      <DependentUpon>ShoulderPressExample.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DumbbellExample.xaml.cs">
+      <DependentUpon>DumbbellExample.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="SquatExample.xaml.cs">
+      <DependentUpon>SquatExample.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -101,6 +110,18 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ShoulderPress.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ShoulderPressExample.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DumbbellExample.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SquatExample.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -1,0 +1,8 @@
+﻿<Window x:Class="Microsoft.Samples.Kinect.BodyBasics.SquatExample"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SquatExample" Height="600" Width="600">
+    <Grid>
+        <MediaElement Name="Example" Source="http://cspc.me/~hyehwa/capstone/squat.mp4"></MediaElement>
+    </Grid>
+</Window>

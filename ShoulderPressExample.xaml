@@ -1,0 +1,8 @@
+﻿<Window x:Class="Microsoft.Samples.Kinect.BodyBasics.ShoulderPressExample"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ShoulderPressExample" Height="600" Width="600">
+    <Grid>
+        <MediaElement Name="Example" Source="http://cspc.me/~hyehwa/capstone/shoulderPress.mp4"></MediaElement>
+    </Grid>
+</Window>

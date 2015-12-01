@@ -59,6 +59,10 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         private void Dumbbell_Button_Click(object sender, RoutedEventArgs e)
         {
+            DumbbellExample ex_window = new DumbbellExample();
+            ex_window.Owner = this;
+            ex_window.Show();
+
             Dumbbell new_window = new Dumbbell();
             new_window.Owner = this;
             new_window.Show();
@@ -66,6 +70,10 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         private void Squat_Button_Click(object sender, RoutedEventArgs e)
         {
+            SquatExample ex_window = new SquatExample();
+            ex_window.Owner = this;
+            ex_window.Show();
+
             Squat new_window = new Squat();
             new_window.Owner = this;
             new_window.Show();
@@ -73,6 +81,11 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         private void ShoulderPress_Button_Click(object sender, RoutedEventArgs e)
         {
+
+            ShoulderPressExample ex_window = new ShoulderPressExample();
+            ex_window.Owner = this;
+            ex_window.Show();
+
             ShoulderPress new_window = new ShoulderPress();
             new_window.Owner = this;
             new_window.Show();

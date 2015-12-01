@@ -228,6 +228,9 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
             // initialize the components (controls) of the window
             this.InitializeComponent();
+
+            this.Top = 150;
+            this.Left = 700;
         }
 
         /// <summary>
